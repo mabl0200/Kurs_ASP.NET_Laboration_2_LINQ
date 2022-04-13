@@ -9,7 +9,8 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
     {
         static void Main(string[] args)
         {
-            LinqSchoolDB context = new LinqSchoolDB();
+            //LinqSchoolDB context = new LinqSchoolDB();
+            //List<Course> courses = GetCourses();
             //AddSchoolClass(context); /*Metod för att lägga till skolklass*/
             //AddTeacher(context); /*Metod för att lägga till lärare*/
             //AddStudents(context); /*Metod för att lägga till studenter*/
@@ -35,16 +36,19 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                     case 1: //Hämta alla lärare som undervisar i ett visst ämne
                         try
                         {
-                            Console.WriteLine("Välj kurs");
-                            using (context)
+                            GetCourses();
+                            //PrintCourses(courses);
+                            using (LinqSchoolDB context = new LinqSchoolDB())
                             {
-                                IEnumerable<Course> courses = from c in context.Courses 
-                                                              select c;
+                                //Console.WriteLine("Välj kurs");
+                                
+                                //IEnumerable<Course> courses = from c in context.Courses 
+                                //                              select c;
 
-                                foreach (Course c in courses)
-                                {
-                                    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
-                                }
+                                //foreach (Course c in courses)
+                                //{
+                                //    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
+                                //}
 
                                 int courseChoice = Int32.Parse(Console.ReadLine());
 
@@ -78,7 +82,7 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                     case 2: //Hämta alla elever med deras lärare, skriv ut både elevernas namn och namnet på alla lärare de har
                         try
                         {
-                            using (context)
+                            using (LinqSchoolDB context = new LinqSchoolDB())
                             {
                                 var schoolClass = from sc in context.SchoolClasses
                                                   select sc;
@@ -124,16 +128,18 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                     case 3: //Hämta alla elever som läser en viss kurs och skriv ut deras namn samn vilken lärare de har i kursen
                         try
                         {
-                            using (context)
+                            using (LinqSchoolDB context = new LinqSchoolDB())
                             {
-                                var courses = from c in context.Courses
-                                              select c;
+                                //var courses = from c in context.Courses
+                                //select c;
 
-                                Console.WriteLine("Välj kurs: ");
-                                foreach (Course c in courses)
-                                {
-                                    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
-                                }
+                                //Console.WriteLine("Välj kurs: ");
+                                //foreach (Course c in courses)
+                                //{
+                                //    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
+                                //}
+                                GetCourses();
+                                //PrintCourses(courses);
                                 int courseChoice = Int32.Parse(Console.ReadLine());
 
                                 var studentCourseTeacher = (from sc in context.StudentCourses
@@ -166,8 +172,102 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                         }
                         break;
                     case 4: //Ändra ett ämne från tex Programmering 2 till OOP
+                        try
+                        {
+                            
+                            using (LinqSchoolDB context = new LinqSchoolDB())
+                            {
+                                GetCourses();
+                                int courseChoice = Int32.Parse(Console.ReadLine());
+
+                                var courseToChange = (from c in context.Courses
+                                                     where c.CourseID == courseChoice
+                                                     select c).ToList();
+
+                                
+                                Console.WriteLine("Vad ska det nya kursnamnet vara?");
+                                string newCourseName = Console.ReadLine();
+
+                                foreach (Course course in courseToChange)
+                                {
+                                    if (course.CourseID == courseChoice)
+                                    {
+                                        Console.WriteLine($"Vill du byta {course.CourseName} till {newCourseName}?");
+                                        string confirm = Console.ReadLine().ToLower();
+                                        switch (confirm)
+                                        {
+                                            case "j":
+                                                course.CourseName = newCourseName;
+                                                context.SaveChanges();
+
+                                                Console.WriteLine($"Nytt kursnamn är {course.CourseName}");
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        
+                                    }
+                                }
+                                Console.WriteLine(new string('-', 30));
+                                Console.WriteLine("Tryck ENTER för att återgå till menyn");
+                                Console.ReadLine();
+                                Console.Clear();
+
+                            }
+
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine(error);
+                            throw;
+                        }
                         break;
                     case 5: //Ändra lärare på en kurs
+                        try
+                        {
+                            using (LinqSchoolDB context = new LinqSchoolDB())
+                            {
+                                GetCourses();
+                                int courseChoice = Int32.Parse(Console.ReadLine());
+
+                                var courseToChange = (from c in context.Courses
+                                                      join t in context.Teachers
+                                                      on c.TeacherID equals t.TeacherID
+                                                      where c.CourseID == courseChoice
+                                                      select c).ToList();
+
+                                Console.WriteLine($"Lärare som har kursen nu: {courseToChange[0].TeacherID}");
+                                Console.WriteLine("Vilken lärare ska ta över denna kurs?");
+                                GetTeachers();
+                                int newTeacher = Int32.Parse(Console.ReadLine());
+                                
+                                Console.ReadLine();
+                                foreach (Course c in courseToChange)
+                                {
+                                    if (c.CourseID == courseChoice)
+                                    {
+                                        Console.WriteLine($"Vill du byta {c.TeacherID} till {newTeacher}?");
+                                        string confirm = Console.ReadLine().ToLower();
+                                        switch (confirm)
+                                        {
+                                            case "j":
+                                                c.TeacherID = newTeacher;
+                                                context.SaveChanges();
+
+                                                Console.WriteLine($"Ny kursansvarig är {c.TeacherID}");
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+
+                            throw;
+                        }
                         break;
                     case 6:
                         keepLooping = false;
@@ -181,6 +281,50 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
 
             
 
+        }
+        public static void GetTeachers()
+        {
+            try
+            {
+                using (LinqSchoolDB context = new LinqSchoolDB())
+                {
+                    List<Teacher> teachers = (from t in context.Teachers
+                                              select t).ToList();
+
+                    Console.WriteLine("Välj lärare: ");
+                    foreach (Teacher t in teachers)
+                    {
+                        Console.WriteLine($"Id: {t.TeacherID} Namn: {t.GetFullName()}");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+        public static void GetCourses()
+        {
+            try
+            {
+                using (LinqSchoolDB context = new LinqSchoolDB())
+                {
+                    List<Course> courses = (from c in context.Courses
+                                            select c).ToList();
+
+                    Console.WriteLine("Välj kurs: ");
+                    foreach (Course c in courses)
+                    {
+                        Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
         public static void AddSchoolClass(LinqSchoolDB context) /*Metod för att lägga till skolklass*/
         {
