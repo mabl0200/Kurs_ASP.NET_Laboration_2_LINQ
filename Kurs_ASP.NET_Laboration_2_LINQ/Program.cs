@@ -1,5 +1,6 @@
 ﻿using Kurs_ASP.NET_Laboration_2_LINQ.Models;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Kurs_ASP.NET_Laboration_2_LINQ
@@ -29,6 +30,43 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                 switch (choice)
                 {
                     case 1: //Hämta alla lärare som undervisar i ett visst ämne
+                        try
+                        {
+                            Console.WriteLine("Välj kurs");
+                            using (var db = new LinqSchoolDB())
+                            {
+                                IEnumerable<Course> courses = from c in db.Courses 
+                                                              select c;
+
+                                foreach (Course c in courses)
+                                {
+                                    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
+                                }
+
+                                int courseChoice = Int32.Parse(Console.ReadLine());
+
+                                var JoinCourse = (from c in db.Courses
+                                                 join t in db.Teachers 
+                                                 on c.TeacherID equals t.TeacherID
+                                                 where c.CourseID == courseChoice
+                                                 select new 
+                                                 {
+                                                     Course = c.CourseName,
+                                                     Teacher = t.GetFullName()
+                                                 }).ToList();
+
+                                
+                                foreach (var t in JoinCourse)
+                                {
+                                    Console.WriteLine($"{t.Teacher} undervisar i {t.Course}");
+                                }
+                            }
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine(error);
+                            throw;
+                        }
                         break;
                     case 2: //Hämta alla elever med deras lärare, skriv ut både elevernas namn och namnet på alla lärare de har
                         break;
