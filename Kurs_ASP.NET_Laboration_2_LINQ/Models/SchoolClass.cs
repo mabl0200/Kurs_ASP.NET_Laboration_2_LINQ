@@ -13,5 +13,16 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ.Models
         public string SchoolClassName { get; set; }
 
         public virtual ICollection<Student> Student { get; set; }
+
+        public List<Student> GetStudents()
+        {
+            List<Student> listToReturn = new List<Student>();
+
+            foreach (var item in Student)
+            {
+                listToReturn.Add(item);
+            }
+            return listToReturn;
+        }
     }
 }
