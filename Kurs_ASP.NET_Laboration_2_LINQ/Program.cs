@@ -9,10 +9,13 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
     {
         static void Main(string[] args)
         {
-            //AddSchoolClass(); /*Metod för att lägga till skolklass*/
-            //AddTeacher(); /*Metod för att lägga till lärare*/
-            //AddStudents(); /*Metod för att lägga till studenter*/
-            //AddCourses(); /*Metod för att lägga till kurser*/
+            LinqSchoolDB context = new LinqSchoolDB();
+            //AddSchoolClass(context); /*Metod för att lägga till skolklass*/
+            //AddTeacher(context); /*Metod för att lägga till lärare*/
+            //AddStudents(context); /*Metod för att lägga till studenter*/
+            //AddCourses(context); /*Metod för att lägga till kurser*/
+            //RemoveFromDataBase(context); /*Metod för att ta bort dubbletter i databas*/
+            //AddStudentsToCourses(context); /*Metod för att lägga till studenter till kurser*/
 
             bool keepLooping = true;
             while (keepLooping)
@@ -33,9 +36,9 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                         try
                         {
                             Console.WriteLine("Välj kurs");
-                            using (var db = new LinqSchoolDB())
+                            using (context)
                             {
-                                IEnumerable<Course> courses = from c in db.Courses 
+                                IEnumerable<Course> courses = from c in context.Courses 
                                                               select c;
 
                                 foreach (Course c in courses)
@@ -45,8 +48,8 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
 
                                 int courseChoice = Int32.Parse(Console.ReadLine());
 
-                                var JoinCourse = (from c in db.Courses
-                                                 join t in db.Teachers 
+                                var JoinCourse = (from c in context.Courses
+                                                 join t in context.Teachers 
                                                  on c.TeacherID equals t.TeacherID
                                                  where c.CourseID == courseChoice
                                                  select new 
@@ -60,6 +63,10 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                                 {
                                     Console.WriteLine($"{t.Teacher} undervisar i {t.Course}");
                                 }
+                                Console.WriteLine(new string('-', 30));
+                                Console.WriteLine("Tryck ENTER för att återgå till menyn");
+                                Console.ReadLine();
+                                Console.Clear();
                             }
                         }
                         catch (Exception error)
@@ -69,8 +76,94 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                         }
                         break;
                     case 2: //Hämta alla elever med deras lärare, skriv ut både elevernas namn och namnet på alla lärare de har
+                        try
+                        {
+                            using (context)
+                            {
+                                var schoolClass = from sc in context.SchoolClasses
+                                                  select sc;
+                                Console.WriteLine("Välj klass: ");
+                                foreach (SchoolClass sc in schoolClass)
+                                {
+                                    Console.WriteLine($"Id {sc.SchoolClassID} Namn: {sc.SchoolClassName}");
+                                }
+
+                                int classChoice = Int32.Parse(Console.ReadLine());
+
+                                var studentsAndTeachers = (from sc in context.StudentCourses
+                                                           join c in context.Courses
+                                                           on sc.CourseID equals c.CourseID
+                                                           join t in context.Teachers
+                                                           on c.TeacherID equals t.TeacherID
+                                                           join s in context.Students
+                                                           on sc.StudentID equals s.StudentID
+                                                           join sch in context.SchoolClasses
+                                                           on s.SchoolClassID equals sch.SchoolClassID
+                                                           where s.SchoolClassID == classChoice
+                                                           select new
+                                                           {
+                                                               SchoolClass = sch.SchoolClassName,
+                                                               Student = s.GetFullName(),
+                                                               Teacher = t.GetFullName(),
+                                                               Course = c.CourseName
+                                                           }).ToList();
+
+                                Console.Clear();
+                                foreach (var item in studentsAndTeachers)
+                                {
+                                    Console.WriteLine($"Klass: {item.SchoolClass} Student: {item.Student} Lärare: {item.Teacher}");
+                                }
+                                Console.ReadLine();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            throw;
+                        }
                         break;
                     case 3: //Hämta alla elever som läser en viss kurs och skriv ut deras namn samn vilken lärare de har i kursen
+                        try
+                        {
+                            using (context)
+                            {
+                                var courses = from c in context.Courses
+                                              select c;
+
+                                Console.WriteLine("Välj kurs: ");
+                                foreach (Course c in courses)
+                                {
+                                    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
+                                }
+                                int courseChoice = Int32.Parse(Console.ReadLine());
+
+                                var studentCourseTeacher = (from sc in context.StudentCourses
+                                                            join s in context.Students
+                                                            on sc.StudentID equals s.StudentID
+                                                            join c in context.Courses
+                                                            on sc.CourseID equals c.CourseID
+                                                            join t in context.Teachers
+                                                            on c.TeacherID equals t.TeacherID
+                                                            where sc.CourseID == courseChoice
+                                                            select new
+                                                            {
+                                                                Student = s.GetFullName(),
+                                                                Teacher = t.GetFullName(),
+                                                                Course = c.CourseName
+                                                            }).ToList();
+                                
+                                foreach (var item in studentCourseTeacher)
+                                {
+                                    Console.WriteLine($"Student: {item.Student} Kurs: {item.Course} Lärare: {item.Teacher}");
+                                    
+                                }
+                                Console.ReadLine();
+                            }
+                        }
+                        catch (Exception)
+                        {
+
+                            throw;
+                        }
                         break;
                     case 4: //Ändra ett ämne från tex Programmering 2 till OOP
                         break;
@@ -89,28 +182,30 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
             
 
         }
-        public static void AddSchoolClass() /*Metod för att lägga till skolklass*/
+        public static void AddSchoolClass(LinqSchoolDB context) /*Metod för att lägga till skolklass*/
         {
             try
             {
-                using LinqSchoolDB context = new LinqSchoolDB();
-
-                SchoolClass schoolClass = new SchoolClass()
+                using (context)
                 {
-                    SchoolClassName = "NV1C"
-                };
+                    SchoolClass schoolClass = new SchoolClass()
+                    {
+                        SchoolClassName = "NV1C"
+                    };
 
-                context.Add(schoolClass);
-                context.SaveChanges();
-                Console.WriteLine($"Added {schoolClass.SchoolClassName}");
+                    context.Add(schoolClass);
+                    context.SaveChanges();
+                    Console.WriteLine($"Added {schoolClass.SchoolClassName}");
+                }
 
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Console.WriteLine(error);
                 throw;
             }
         }
-        public static void AddTeacher() /*Metod för att lägga till lärare*/
+        public static void AddTeacher(LinqSchoolDB context) /*Metod för att lägga till lärare*/
         {
             try
             {
@@ -119,18 +214,19 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                 int randomFirstName = new Random().Next(0, 12);
                 int randomLastName = new Random().Next(0, 12);
 
-                using LinqSchoolDB context = new LinqSchoolDB();
-
-                Teacher teacher = new Teacher()
+                using (context)
                 {
-                    FirstName = FirstNames[randomFirstName],
-                    LastName = LastNames[randomLastName]
-                    
-                };
+                    Teacher teacher = new Teacher()
+                    {
+                        FirstName = FirstNames[randomFirstName],
+                        LastName = LastNames[randomLastName]
 
-                context.Add(teacher);
-                context.SaveChanges();
-                Console.WriteLine($"Added {teacher.GetFullName()}");
+                    };
+
+                    context.Add(teacher);
+                    context.SaveChanges();
+                    Console.WriteLine($"Added {teacher.GetFullName()}");
+                } 
 
             }
             catch (Exception)
@@ -139,7 +235,7 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
             }
 
         }
-        public static void AddStudents() /*Metod för att lägga till studenter*/
+        public static void AddStudents(LinqSchoolDB context) /*Metod för att lägga till studenter*/
         {
             try
             {
@@ -148,18 +244,19 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                 int randomFirstName = new Random().Next(0, 12);
                 int randomLastName = new Random().Next(0, 12);
 
-                using LinqSchoolDB context = new LinqSchoolDB();
-
-                Student student = new Student()
+                using (context)
                 {
-                    FirstName = FirstNames[randomFirstName],
-                    LastName = LastNames[randomLastName],
-                    SchoolClassID = 3
-                };
+                    Student student = new Student()
+                    {
+                        FirstName = FirstNames[randomFirstName],
+                        LastName = LastNames[randomLastName],
+                        SchoolClassID = 1
+                    };
 
-                context.Add(student);
-                context.SaveChanges();
-                Console.WriteLine($"Added {student.GetFullName()}");
+                    context.Add(student);
+                    context.SaveChanges();
+                    Console.WriteLine($"Added {student.GetFullName()}");
+                } 
             }
             catch (Exception)
             {
@@ -168,26 +265,82 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
             }
 
         }
-        public static void AddCourses() /*Metod för att lägga till kurser*/
+        public static void AddCourses(LinqSchoolDB context) /*Metod för att lägga till kurser*/
         {
             try
             {
-                using LinqSchoolDB context = new LinqSchoolDB();
-
-                Course course = new Course()
+                using (context)
                 {
-                    CourseName = "Fysik 1",
-                    TeacherID = 3
-                };
+                    Course course = new Course()
+                    {
+                        CourseName = "Fysik 1",
+                        TeacherID = 3
+                    };
 
-                context.Add(course);
-                context.SaveChanges();
-                Console.WriteLine($"Added course: {course.CourseName}");
+                    context.Add(course);
+                    context.SaveChanges();
+                    Console.WriteLine($"Added course: {course.CourseName}");
+
+                } 
             }
             catch (Exception)
             {
                 throw;
             }
+        }
+        public static void AddStudentsToCourses(LinqSchoolDB context)
+        {
+            try
+            {
+                using (context)
+                {
+                    var schoolClass = (from sc in context.Students
+                                      where sc.SchoolClassID == 3
+                                      select sc).ToList();
+
+                    foreach (Student s in schoolClass)
+                    {
+                        StudentCourse studentCourse = new StudentCourse()
+                        {
+                            StudentID = s.StudentID,
+                            CourseID = 6
+                        };
+                        context.Add(studentCourse);
+                        context.SaveChanges();
+                        Console.WriteLine($"Adderade {studentCourse.StudentID} till {studentCourse.CourseID} ");
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(error);
+                throw;
+            }
+        }
+        public static void RemoveFromDataBase(LinqSchoolDB context)
+        {
+            try
+            {
+                using (context)
+                {
+                    var student = context.Students.Where(s => s.StudentID == 4).FirstOrDefault();
+
+                    if (student is Student)
+                    {
+                        context.Remove(student);
+                    }
+                    context.SaveChanges();
+
+                    Console.WriteLine($"Tog bort {student.GetFullName()} från databas");
+                    Console.ReadLine();
+
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            
         }
 
     }
