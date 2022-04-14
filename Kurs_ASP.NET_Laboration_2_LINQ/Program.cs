@@ -9,8 +9,6 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
     {
         static void Main(string[] args)
         {
-            //LinqSchoolDB context = new LinqSchoolDB();
-            //List<Course> courses = GetCourses();
             //AddSchoolClass(context); /*Metod för att lägga till skolklass*/
             //AddTeacher(context); /*Metod för att lägga till lärare*/
             //AddStudents(context); /*Metod för att lägga till studenter*/
@@ -37,19 +35,8 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                         try
                         {
                             GetCourses();
-                            //PrintCourses(courses);
                             using (LinqSchoolDB context = new LinqSchoolDB())
                             {
-                                //Console.WriteLine("Välj kurs");
-                                
-                                //IEnumerable<Course> courses = from c in context.Courses 
-                                //                              select c;
-
-                                //foreach (Course c in courses)
-                                //{
-                                //    Console.WriteLine($"Id: {c.CourseID} Namn: {c.CourseName}");
-                                //}
-
                                 int courseChoice = Int32.Parse(Console.ReadLine());
 
                                 var JoinCourse = (from c in context.Courses
@@ -61,7 +48,6 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                                                      Course = c.CourseName,
                                                      Teacher = t.GetFullName()
                                                  }).ToList();
-
                                 
                                 foreach (var t in JoinCourse)
                                 {
@@ -86,6 +72,7 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                             {
                                 var schoolClass = from sc in context.SchoolClasses
                                                   select sc;
+
                                 Console.WriteLine("Välj klass: ");
                                 foreach (SchoolClass sc in schoolClass)
                                 {
@@ -113,10 +100,38 @@ namespace Kurs_ASP.NET_Laboration_2_LINQ
                                                            }).ToList();
 
                                 Console.Clear();
+                                var header = String.Format("{0,-8}{1,-20}{2,-20}{3,-10}\n",
+                                                             "Klass", "Elev", "Lärare", "Kurs");
+                                var student = "";
+                                Console.WriteLine(header);
                                 foreach (var item in studentsAndTeachers)
                                 {
-                                    Console.WriteLine($"Klass: {item.SchoolClass} Student: {item.Student} Lärare: {item.Teacher}");
+                                    if (student == null)
+                                    {
+                                        student = item.Student;
+                                        var output = String.Format("{0,-8}{1,-20}{2,-20}{3,-10}",
+                                                                item.SchoolClass, item.Student, item.Teacher, item.Course);
+                                        Console.WriteLine(output);
+                                    }
+                                    else if (student == item.Student)
+                                    {
+                                        var output = String.Format("{0,-8}{1,-20}{2,-20}{3,-10}",
+                                                                item.SchoolClass, " ", item.Teacher, item.Course);
+                                        Console.WriteLine(output);
+
+                                    }
+                                    else if (student != item.Student)
+                                    {
+                                        student = item.Student;
+                                        var output = String.Format("{0,-8}{1,-20}{2,-20}{3,-10}",
+                                                                item.SchoolClass, item.Student, item.Teacher, item.Course);
+                                        Console.WriteLine(new string('-', 60));
+                                        Console.WriteLine(output);
+
+                                    }
+                                    
                                 }
+                                Console.WriteLine(new string('-', 60));
                                 Console.ReadLine();
                             }
                         }
